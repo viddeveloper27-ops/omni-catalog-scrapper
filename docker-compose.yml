@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: scrapper:latest
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      PUPPETEER_USER_DATA_DIR: /home/node/puppeteer_data
+    volumes:
+      - ./puppeteer_data:/home/node/puppeteer_data
+    restart: unless-stopped
+    # Compose v3+ uses `deploy.resources` (honored by Swarm).
+    # Some docker-compose implementations do not apply `deploy` limits outside Swarm.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    # For compatibility with older compose versions / tooling that still supports it
+    mem_limit: 1g
