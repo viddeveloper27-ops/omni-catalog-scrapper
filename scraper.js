@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 import dotenv from "dotenv";
 import axios from "axios";
 import puppeteer from "puppeteer";
+import fs from "fs";
 
 dotenv.config();
 
@@ -19,8 +20,21 @@ function dedupe(images) {
 export default async function scrapeProduct(url) {
 
     const browser = await puppeteer.launch({
-        headless: "new"
+        executablePath: "./chrome/chrome/linux-146.0.7680.31/chrome-linux64/chrome",
+        headless: "new",
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage"
+        ]
     });
+
+    console.log(
+        "Chrome exists:",
+        fs.existsSync(
+            "/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome"
+        )
+    );
 
     const page = await browser.newPage();
 
