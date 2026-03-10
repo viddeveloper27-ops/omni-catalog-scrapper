@@ -20,8 +20,9 @@ function dedupe(images) {
 export default async function scrapeProduct(url) {
 
     const browser = await puppeteer.launch({
-        executablePath: "./chrome/chrome/linux-146.0.7680.31/chrome-linux64/chrome",
         headless: "new",
+        executablePath:
+            "/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome",
         args: [
             "--no-sandbox",
             "--disable-setuid-sandbox",
