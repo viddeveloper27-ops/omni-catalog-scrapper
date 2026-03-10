@@ -24,7 +24,9 @@ export default async function scrapeProduct(url) {
         }
     });
 
+    console.log(res, "scrapperrrrrr resulttttttttt")
     const html = res.data;
+    console.log(html, "htmlllll resultttttttt")
 
     const $ = cheerio.load(html);
 
@@ -52,6 +54,8 @@ export default async function scrapeProduct(url) {
         .replace(/\s+/g, " ")
         .trim()
         .slice(0, 15000);
+
+    console.log(textContent, "======================textContenttttt");
 
     const prompt = `
 You are an expert ecommerce content writer and Amazon listing specialist.
@@ -129,7 +133,9 @@ ${textContent}
         }
     );
 
+    console.log(aiRes, "geminiresponseeee----")
     const aiData = aiRes.data;
+    console.log(aiData, "aiDataaaaaa----")
 
 
     console.log("Gemini response:", JSON.stringify(aiData, null, 2));
