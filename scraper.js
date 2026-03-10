@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import dotenv from "dotenv";
 import axios from "axios";
+import puppeteer from "puppeteer";
 
 dotenv.config();
 
@@ -17,16 +18,17 @@ function dedupe(images) {
 
 export default async function scrapeProduct(url) {
 
-    const res = await axios.get(url, {
-        headers: {
-            "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
-        }
+    const browser = await puppeteer.launch({
+        headless: "new"
     });
 
-    console.log(res, "scrapperrrrrr resulttttttttt")
-    const html = res.data;
+    const page = await browser.newPage();
+
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+
+    const html = await page.content();
     console.log(html, "htmlllll resultttttttt")
+
 
     const $ = cheerio.load(html);
 
