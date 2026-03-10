@@ -1,4 +1,6 @@
 import fetch from "node-fetch";
+import fs from "fs";
+import axios from "axios";
 
 export default async function generateImage(req, res) {
     try {
@@ -21,7 +23,6 @@ export default async function generateImage(req, res) {
         let stylePrompt;
 
         if (style === "white-background") {
-            console.log("first imageeeee")
             stylePrompt = `
                 Generate a professional ecommerce product image.
 
@@ -50,36 +51,37 @@ export default async function generateImage(req, res) {
             ? imageBase64.split(",")[1]
             : imageBase64;
 
+
         const mimeType = imageBase64.startsWith("data:image/png")
             ? "image/png"
             : "image/jpeg";
 
-        const aiResponse = await fetch(
+
+        const aiResponse = await axios.post(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`,
             {
-                method: "POST",
+                contents: [
+                    {
+                        parts: [
+                            { text: stylePrompt },
+                            {
+                                inlineData: {
+                                    mimeType: mimeType,
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [
-                                { text: stylePrompt },
-                                {
-                                    inlineData: {
-                                        mimeType,
-                                        data: base64Data
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                })
+                }
             }
         );
 
-        const aiData = await aiResponse.json();
+        const aiData = aiResponse.data;
 
         const images = [];
 

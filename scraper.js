@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import dotenv from "dotenv";
+import axios from "axios";
 
 dotenv.config();
 
@@ -16,14 +17,14 @@ function dedupe(images) {
 
 export default async function scrapeProduct(url) {
 
-    const res = await fetch(url, {
+    const res = await axios.get(url, {
         headers: {
             "User-Agent":
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
         }
     });
 
-    const html = await res.text();
+    const html = res.data;
 
     const $ = cheerio.load(html);
 
@@ -112,24 +113,24 @@ Webpage content:
 ${textContent}
 `;
 
-    const aiRes = await fetch(
+    const aiRes = await axios.post(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
         {
-            method: "POST",
+            contents: [
+                {
+                    parts: [{ text: prompt }]
+                }
+            ]
+        },
+        {
             headers: {
                 "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [{ text: prompt }]
-                    }
-                ]
-            })
+            }
         }
     );
 
-    const aiData = await aiRes.json();
+    const aiData = aiRes.data;
+
 
     console.log("Gemini response:", JSON.stringify(aiData, null, 2));
 
