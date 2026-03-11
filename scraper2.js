@@ -382,6 +382,20 @@ ${textContent}
 // ─────────────────────────────────────────────
 
 export default async function scrapeProduct(url) {
+    let url = rawUrl.trim();
+
+    // Add https:// if no protocol present
+    if (!/^https?:\/\//i.test(url)) {
+        url = "https://" + url;
+    }
+
+    // Optional: ensure it's a valid URL before even trying
+    try {
+        new URL(url);
+    } catch {
+        throw new Error(`Invalid URL: "${rawUrl}"`);
+    }
+
     // 1. Fetch HTML with fallbacks
     const html = await fetchHtmlWithFallbacks(url);
 
