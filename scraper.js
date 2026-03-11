@@ -33,9 +33,6 @@ export default async function scrapeProduct(url) {
 
     const html = await page.content();
 
-    console.log(html, "htmlllll resultttttttt")
-
-
     const $ = cheerio.load(html);
 
     const extractedImages = [];
