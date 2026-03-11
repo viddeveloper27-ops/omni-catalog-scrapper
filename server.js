@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import scrapeProduct from "./scraper.js";
+import scrapeProduct from "./scraper2.js";
 import generateImage from "./imageGenerator.js";
 
 dotenv.config();
