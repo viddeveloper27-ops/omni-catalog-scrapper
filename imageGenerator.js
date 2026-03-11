@@ -24,16 +24,44 @@ export default async function generateImages(req, res) {
             {
                 name: "white-background",
                 prompt: `
-                    Generate a professional ecommerce product image.
+                    Generate the official ecommerce MAIN PRODUCT IMAGE.
 
-                    Requirements:
-                    - Pure white background
-                    - Product centered
-                    - Product occupies at least 85% of frame
-                    - No props
-                    - No shadows
-                    - Clean studio lighting
-                `,
+                    Strict requirements:
+
+                    Product accuracy
+                    - The image must accurately represent the real product.
+                    - Maintain the correct color, scale, and proportions.
+                    - Do not modify the product design.
+
+                    Background
+                    - Pure white background only (RGB 255,255,255).
+                    - No gradients, shadows, reflections, or textures.
+
+                    Framing
+                    - Show the entire product fully inside the frame.
+                    - The product should occupy about 85–90% of the image.
+                    - Center the product perfectly.
+
+                    Content rules
+                    - Show ONLY one unit of the product.
+                    - Do not duplicate the product.
+                    - Do not show multiple angles.
+                    - No accessories unless they are included with the product.
+
+                    Prohibited elements
+                    - No text
+                    - No logos
+                    - No watermarks
+                    - No graphics
+                    - No borders
+                    - No color blocks
+                    - No promotional elements
+
+                    Styling
+                    - Clean professional studio lighting.
+                    - Neutral commercial product photography style.
+                    - The result should look like a real catalog product photo used for ecommerce listings.
+                `
             },
             {
                 name: "lifestyle",
