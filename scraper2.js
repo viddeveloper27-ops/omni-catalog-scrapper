@@ -381,7 +381,7 @@ ${textContent}
 // MAIN EXPORT
 // ─────────────────────────────────────────────
 
-export default async function scrapeProduct(url) {
+export default async function scrapeProduct(rawUrl) {
     let url = rawUrl.trim();
 
     // Add https:// if no protocol present
