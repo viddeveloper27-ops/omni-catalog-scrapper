@@ -18,7 +18,13 @@ function dedupe(images) {
 export default async function scrapeProduct(url) {
 
     const browser = await puppeteer.launch({
-        headless: "new"
+        headless: "new",
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu"
+        ]
     });
 
     const page = await browser.newPage();
