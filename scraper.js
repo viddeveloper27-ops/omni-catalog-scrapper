@@ -63,7 +63,6 @@ export default async function scrapeProduct(url) {
         .trim()
         .slice(0, 15000);
 
-    console.log(textContent, "======================textContenttttt");
 
     const prompt = `
 You are an expert ecommerce content writer and Amazon listing specialist.
@@ -141,12 +140,9 @@ ${textContent}
         }
     );
 
-    console.log(aiRes, "geminiresponseeee----")
+    console.log(aiRes?.status, "statusss");
+
     const aiData = aiRes.data;
-    console.log(aiData, "aiDataaaaaa----")
-
-
-    console.log("Gemini response:", JSON.stringify(aiData, null, 2));
 
     const text = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
