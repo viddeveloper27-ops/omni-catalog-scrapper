@@ -24,16 +24,16 @@ export default async function generateImages(req, res) {
             {
                 name: "white-background",
                 prompt: `
-Generate a professional ecommerce product image.
+                    Generate a professional ecommerce product image.
 
-Requirements:
-- Pure white background
-- Product centered
-- Product occupies 80% of frame
-- No props
-- No shadows
-- Clean studio lighting
-`,
+                    Requirements:
+                    - Pure white background
+                    - Product centered
+                    - Product occupies at least 85% of frame
+                    - No props
+                    - No shadows
+                    - Clean studio lighting
+                `,
             },
             {
                 name: "lifestyle",
@@ -48,16 +48,16 @@ Requirements:
             {
                 name: "model-usage",
                 prompt: `
-Generate a professional ecommerce lifestyle image featuring a human model using this product.
+                    Generate a professional ecommerce lifestyle image featuring a human model using this product.
 
-Requirements:
-- Include a realistic human model interacting naturally with the product
-- The product must remain clearly visible and unchanged
-- The model should appear natural and authentic
-- Use soft professional lighting
-- Environment should feel modern and clean
-- The product must remain the main focus of the image
-`
+                    Requirements:
+                    - Include a realistic human model interacting naturally with the product
+                    - The product must remain clearly visible and unchanged
+                    - The model should appear natural and authentic
+                    - Use soft professional lighting
+                    - Environment should feel modern and clean
+                    - The product must remain the main focus of the image
+                `,
             }
         ];
 
