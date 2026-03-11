@@ -346,10 +346,22 @@ ${textContent}
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
             const aiRes = await axios.post(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-                { contents: [{ parts: [{ text: prompt }] }] },
-                { headers: { "Content-Type": "application/json" }, timeout: 60000 }
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
+                {
+                    contents: [
+                        {
+                            parts: [{ text: prompt }]
+                        }
+                    ]
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                }
             );
+
+            console.log(aiRes?.status, "statusss");
 
             const text = aiRes.data?.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!text) throw new Error("Empty AI response");
