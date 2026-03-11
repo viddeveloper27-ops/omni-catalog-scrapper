@@ -1,112 +1,133 @@
-import fetch from "node-fetch";
-import fs from "fs";
 import axios from "axios";
 
-export default async function generateImage(req, res) {
+export default async function generateImages(req, res) {
     try {
-        const { imageBase64, style } = req.body;
+        const { imageBase64 } = req.body;
 
-        if (!imageBase64 || !style) {
+        if (!imageBase64) {
             return res.status(400).json({
-                error: "imageBase64 and style are required"
+                error: "imageBase64 is required",
             });
         }
 
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-        if (!GEMINI_API_KEY) {
-            return res.status(500).json({
-                error: "Gemini API key not configured"
-            });
-        }
-
-        let stylePrompt;
-
-        if (style === "white-background") {
-            stylePrompt = `
-                Generate a professional ecommerce product image.
-
-                Requirements:
-                - Pure white studio background (#FFFFFF)
-                - Product centered in the frame
-                - Product must occupy about 80% of the image area
-                - Small even white margin around the product
-                - Soft studio lighting
-                - No props, no shadows, no reflections
-                - Product must remain exactly unchanged
-
-                Output a clean ecommerce-ready product photo.
-                `;
-        }
-        else if (style === "lifestyle") {
-            stylePrompt =
-                "Place this product in a realistic lifestyle scene showing it naturally used in an appealing environment.";
-        }
-        else {
-            stylePrompt =
-                "Create a premium promotional advertisement image using this product with bold colors and creative composition.";
-        }
-
         const base64Data = imageBase64.includes(",")
             ? imageBase64.split(",")[1]
             : imageBase64;
-
 
         const mimeType = imageBase64.startsWith("data:image/png")
             ? "image/png"
             : "image/jpeg";
 
-
-        const aiResponse = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`,
+        const styles = [
             {
-                contents: [
-                    {
-                        parts: [
-                            { text: stylePrompt },
-                            {
-                                inlineData: {
-                                    mimeType: mimeType,
-                                    data: base64Data
-                                }
-                            }
-                        ]
-                    }
-                ]
+                name: "white-background",
+                prompt: `
+Generate a professional ecommerce product image.
+
+Requirements:
+- Pure white background
+- Product centered
+- Product occupies 80% of frame
+- No props
+- No shadows
+- Clean studio lighting
+`,
             },
             {
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }
-        );
+                name: "lifestyle",
+                prompt:
+                    "Place this product in a realistic lifestyle scene showing natural use.",
+            },
+            {
+                name: "creative",
+                prompt:
+                    "Create a premium promotional advertisement image using bold composition and colors.",
+            },
+            {
+                name: "model-usage",
+                prompt: `
+Generate a professional ecommerce lifestyle image featuring a human model using this product.
 
-        const aiData = aiResponse.data;
+Requirements:
+- Include a realistic human model interacting naturally with the product
+- The product must remain clearly visible and unchanged
+- The model should appear natural and authentic
+- Use soft professional lighting
+- Environment should feel modern and clean
+- The product must remain the main focus of the image
+`
+            }
+        ];
 
         const images = [];
 
-        const parts =
-            aiData?.candidates?.[0]?.content?.parts || [];
+        for (const style of styles) {
+            const aiResponse = await callGeminiWithRetry({
+                url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`,
+                body: {
+                    contents: [
+                        {
+                            parts: [
+                                { text: style.prompt },
+                                {
+                                    inlineData: {
+                                        mimeType,
+                                        data: base64Data,
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                },
+                config: {
+                    headers: { "Content-Type": "application/json" },
+                }
+            });
 
-        for (const part of parts) {
-            if (part.inlineData?.data) {
-                images.push(
-                    `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
-                );
+            const parts = aiResponse.data?.candidates?.[0]?.content?.parts || [];
+
+            for (const part of parts) {
+                if (part.inlineData?.data) {
+                    images.push(
+                        `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
+                    );
+                }
             }
         }
 
-        res.json({
+        return res.json({
             success: true,
-            images
+            images,
         });
-
     } catch (err) {
-        console.error("Image generation error:", err);
+        console.error(err);
 
         res.status(500).json({
             success: false,
-            error: err.message
+            error: err.message,
         });
+    }
+}
+
+async function callGeminiWithRetry(payload, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const res = await axios.post(payload.url, payload.body, payload.config);
+            return res;
+        } catch (err) {
+
+            const status = err.response?.status;
+
+            if (status === 429 && attempt < maxRetries) {
+                const delay = 2000 * attempt;
+                console.warn(`Gemini rate limit. Retry ${attempt} in ${delay}ms`);
+                await new Promise(r => setTimeout(r, delay));
+                continue;
+            }
+
+            throw err;
+        }
     }
 }
