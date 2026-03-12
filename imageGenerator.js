@@ -5,9 +5,7 @@ export default async function generateImages(req, res) {
         const { imageBase64, numberOfImages } = req.body;
 
         if (!imageBase64) {
-            return res.status(400).json({
-                error: "imageBase64 is required",
-            });
+            return res.status(400).json({ error: "imageBase64 is required" });
         }
 
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -65,13 +63,11 @@ export default async function generateImages(req, res) {
             },
             {
                 name: "lifestyle",
-                prompt:
-                    "Place this product in a realistic lifestyle scene showing natural use.",
+                prompt: "Place this product in a realistic lifestyle scene showing natural use.",
             },
             {
                 name: "creative",
-                prompt:
-                    "Create a premium promotional advertisement image using bold composition and colors.",
+                prompt: "Create a premium promotional advertisement image using bold composition and colors.",
             },
             {
                 name: "model-usage",
@@ -134,53 +130,76 @@ export default async function generateImages(req, res) {
 
         const tempStyles = styles.slice(0, numberOfImages || styles.length);
 
-        const images = [];
+        // ── Set up SSE (Server-Sent Events) streaming ──
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.flushHeaders();
+
+        const sendEvent = (data) => {
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+            // Flush if available (for compression middleware compatibility)
+            if (typeof res.flush === "function") res.flush();
+        };
+
+        let generatedCount = 0;
 
         for (const style of tempStyles) {
-            const aiResponse = await callGeminiWithRetry({
-                url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`,
-                body: {
-                    contents: [
-                        {
-                            parts: [
-                                { text: style.prompt },
-                                {
-                                    inlineData: {
-                                        mimeType,
-                                        data: base64Data,
-                                    },
-                                },
-                            ],
-                        },
-                    ],
-                },
-                config: {
-                    headers: { "Content-Type": "application/json" },
-                }
-            });
+            try {
+                const aiResponse = await callGeminiWithRetry({
+                    url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`,
+                    body: {
+                        contents: [
+                            {
+                                parts: [
+                                    { text: style.prompt },
+                                    { inlineData: { mimeType, data: base64Data } },
+                                ],
+                            },
+                        ],
+                    },
+                    config: { headers: { "Content-Type": "application/json" } },
+                });
 
-            const parts = aiResponse.data?.candidates?.[0]?.content?.parts || [];
+                const parts = aiResponse.data?.candidates?.[0]?.content?.parts || [];
 
-            for (const part of parts) {
-                if (part.inlineData?.data) {
-                    images.push(
-                        `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
-                    );
+                for (const part of parts) {
+                    if (part.inlineData?.data) {
+                        generatedCount++;
+                        // Stream each image immediately as it's ready
+                        sendEvent({
+                            type: "image",
+                            index: generatedCount - 1,
+                            styleName: style.name,
+                            image: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+                            total: tempStyles.length,
+                        });
+                    }
                 }
+            } catch (err) {
+                console.warn(`[generateImages] Style "${style.name}" failed: ${err.message}`);
+                // Send error for this style but continue with others
+                sendEvent({
+                    type: "error",
+                    styleName: style.name,
+                    message: err.message,
+                });
             }
         }
 
-        return res.json({
-            success: true,
-            images,
-        });
+        // Signal completion
+        sendEvent({ type: "done", total: generatedCount });
+        res.end();
     } catch (err) {
         console.error(err);
-
-        res.status(500).json({
-            success: false,
-            error: err.message,
-        });
+        // If headers not sent yet, send JSON error; otherwise stream it
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, error: err.message });
+        } else {
+            res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
+            res.end();
+        }
     }
 }
 
@@ -190,16 +209,13 @@ async function callGeminiWithRetry(payload, maxRetries = 3) {
             const res = await axios.post(payload.url, payload.body, payload.config);
             return res;
         } catch (err) {
-
             const status = err.response?.status;
-
             if (status === 429 && attempt < maxRetries) {
                 const delay = 2000 * attempt;
                 console.warn(`Gemini rate limit. Retry ${attempt} in ${delay}ms`);
                 await new Promise(r => setTimeout(r, delay));
                 continue;
             }
-
             throw err;
         }
     }
