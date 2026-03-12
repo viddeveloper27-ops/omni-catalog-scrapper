@@ -2,7 +2,7 @@ import axios from "axios";
 
 export default async function generateImages(req, res) {
     try {
-        const { imageBase64 } = req.body;
+        const { imageBase64, numberOfImages } = req.body;
 
         if (!imageBase64) {
             return res.status(400).json({
@@ -86,12 +86,57 @@ export default async function generateImages(req, res) {
                     - Environment should feel modern and clean
                     - The product must remain the main focus of the image
                 `,
+            },
+            {
+                name: "close-up-detail",
+                prompt: `
+                    Generate a professional macro close-up image highlighting the product details.
+
+                    Requirements:
+                    - Focus on important textures, materials, or craftsmanship of the product
+                    - Show a close-up perspective of the product
+                    - Maintain realistic colors and accurate materials
+                    - Use soft studio lighting to highlight fine details
+                    - Background should be clean and minimal
+                    - The product must remain the main focus
+                `
+            },
+            {
+                name: "benefits-highlight",
+                prompt: `
+                    Generate a professional ecommerce marketing image that visually demonstrates the key benefits of this product.
+
+                    Requirements:
+                    - Show the product being used in a way that clearly communicates its main benefit or value.
+                    - The benefit should be visually obvious through the scene, interaction, or outcome.
+                    - Do not add any text, labels, or graphics explaining the benefit.
+                    - The product must remain clearly visible and unchanged.
+                    - Use natural lighting and a clean modern environment.
+                    - The product should remain the main focus of the image.
+                    - The scene should feel realistic and relatable to everyday product use.
+                    - Composition should clearly emphasize why the product is useful or desirable.
+                `
+            },
+            {
+                name: "environment-context",
+                prompt: `
+                    Generate a realistic contextual scene where the product naturally belongs.
+
+                    Requirements:
+                    - Place the product in a realistic environment related to its use
+                    - The scene should feel authentic and natural
+                    - Lighting should match the environment
+                    - The product must remain clearly visible and in focus
+                    - Do not overpower the product with background elements
+                `
             }
         ];
 
+        const tempStyles = styles.slice(0, numberOfImages || styles.length);
+
         const images = [];
 
-        for (const style of styles) {
+        for (const style of tempStyles) {
             const aiResponse = await callGeminiWithRetry({
                 url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_API_KEY}`,
                 body: {
